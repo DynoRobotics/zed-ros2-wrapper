@@ -4421,7 +4421,6 @@ bool ZedCamera::startPosTracking() {
   }
 
   // Tracking parameters
-  sl::PositionalTrackingParameters ptParams;
 
   mPoseSmoothing = false;  // Always false. Pose Smoothing is to be enabled only
                            // for VR/AR applications
@@ -10165,13 +10164,30 @@ void ZedCamera::callback_saveAreaMap(
     fileName = "map.area";
   }
 
-  sl::ERROR_CODE sAMError = mZed->saveAreaMap(fileName.c_str());
+  // Save area map after disabling positional tracking
+  sl::ERROR_CODE er_code = mZed->saveAreaMap(fileName.c_str());
 
-  if (sAMError != sl::ERROR_CODE::SUCCESS) {
-    RCLCPP_ERROR_STREAM(get_logger(),
-                        "Save Area Map error: " << sl::toString(sAMError));
+  if (er_code != sl::ERROR_CODE::SUCCESS) {
+    RCLCPP_ERROR(get_logger(), "Error saving area map to file.");
+    return;
+  }
+
+  sl::AREA_EXPORTING_STATE state;
+  do {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    state = mZed->getAreaExportState();
+    if (rclcpp::ok())
+      RCLCPP_INFO(get_logger(), "Exporting Area to file.");
+    else
+      RCLCPP_ERROR(get_logger(),
+                   "Terminate called when exporting Area to file.");
+  } while (state == sl::AREA_EXPORTING_STATE::RUNNING);
+
+  if (state == sl::AREA_EXPORTING_STATE::SUCCESS) {
+    RCLCPP_INFO(get_logger(), "Area Memory file saved correctly.");
   } else {
-    RCLCPP_INFO(get_logger(), "Area map saved to: %s", fileName.c_str());
+    RCLCPP_ERROR(get_logger(), "Error saving Area Memory file %s.",
+                 sl::toString(state).c_str());
   }
 }
 

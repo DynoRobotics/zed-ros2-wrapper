@@ -330,6 +330,7 @@ class ZedCamera : public rclcpp::Node {
   float mRoiImgHeightRationCutOff = 0.5f;
   std::unordered_set<sl::MODULE> mRoiModules;
 
+  sl::PositionalTrackingParameters ptParams;
   bool mPosTrackingEnabled = false;
   bool mPublishTF = false;
   bool mPublishMapTF = false;
