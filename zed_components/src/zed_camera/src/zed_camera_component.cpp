@@ -10158,16 +10158,21 @@ void ZedCamera::callback_clickedPoint(
 
 void ZedCamera::callback_saveAreaMap(
     const std_msgs::msg::String::SharedPtr msg) {
-  
   std::string fileName = msg->data;
   if (fileName == "") {
-    RCLCPP_WARN(get_logger(), "Empty file path received. Saving area map to map.area.");
+    RCLCPP_WARN(get_logger(),
+                "Empty file path received. Saving area map to map.area.");
     fileName = "map.area";
   }
 
-  mZed->saveAreaMap(fileName.c_str());
-  
-  RCLCPP_INFO(get_logger(), "Area map saved to: %s", fileName.c_str());
+  sl::ERROR_CODE sAMError = mZed->saveAreaMap(fileName.c_str());
+
+  if (sAMError != sl::ERROR_CODE::SUCCESS) {
+    RCLCPP_ERROR_STREAM(get_logger(),
+                        "Save Area Map error: " << sl::toString(sAMError));
+  } else {
+    RCLCPP_INFO(get_logger(), "Area map saved to: %s", fileName.c_str());
+  }
 }
 
 void ZedCamera::callback_setRoi(
